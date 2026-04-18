@@ -2,18 +2,28 @@ import os
 import json
 from typing import List
 from fastapi import FastAPI, HTTPException
+# --- ADD THIS LINE ---
+from fastapi.middleware.cors import CORSMiddleware 
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import openai
 import requests
 
-# 1. SETUP - Loading the "Brain" and "Keys"
+# 1. SETUP
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 OPENVERSE_CLIENT_ID = os.getenv("OPENVERSE_CLIENT_ID")
 OPENVERSE_CLIENT_SECRET = os.getenv("OPENVERSE_CLIENT_SECRET")
 
 app = FastAPI(title="OpenVisualist AI Engine")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- DATA MODELS ---
 
