@@ -6,10 +6,10 @@ OpenVisualist is an AI-powered curation engine that bridges the gap between long
 
 ---
 
-## 🚀 The Vision
+## The Vision
 In an era of AI hallucinations, **OpenVisualist** prioritizes the "Provenance of the Real." It is designed for authors, historians, and publishers who need high-quality visuals without the legal or ethical ambiguity of generated art.
 
-## 🧠 How the AI Works
+## How the AI Works
 OpenVisualist doesn't just "search" keywords; it performs **Semantic Mapping**:
 1. **Contextual Analysis:** The engine uses LLMs to parse your essay for themes, moods, and specific historical references.
 2. **Visual Query Expansion:** It translates abstract concepts (e.g., "industrial melancholy") into concrete search parameters (e.g., "19th-century steel mill, low light, soot").
@@ -18,7 +18,7 @@ OpenVisualist doesn't just "search" keywords; it performs **Semantic Mapping**:
 
 ---
 
-## 🛠️ Repository Structure
+## Repository Structure
 
 ```text
 open-visualist/
@@ -32,3 +32,6 @@ open-visualist/
 ├── wordpress-plugin/     # The "OpenVisualist Sync" WP integration
 ├── .env.example          # API Keys (OpenAI, Unsplash, Pexels)
 └── LICENSE               # MIT
+
+## View Mockup
+https://kaushambimate.com/openvisualist-ai/
