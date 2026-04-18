@@ -18,6 +18,11 @@ OpenVisualist doesn't just "search" keywords; it performs **Semantic Mapping**:
 
 ---
 
+## View Mockup
+https://kaushambimate.com/openvisualist-ai/
+
+---
+
 ## Repository Structure
 
 ```text
@@ -33,7 +38,3 @@ open-visualist/
 ├── .env.example          # API Keys (OpenAI, Unsplash, Pexels)
 └── LICENSE               # MIT
 
----
-
-## View Mockup
-https://kaushambimate.com/openvisualist-ai/
