@@ -74,15 +74,21 @@ def get_openverse_token():
 
 def source_images(keyword: str, token: str) -> List[ImageResult]:
     """
-    Gear 3: The Librarian.
-    Broadened to find more results while still keeping things legal.
+    Improved Librarian: Cleans keywords and broadens search 
+    to ensure we get results even for complex topics.
     """
-    search_url = f"https://api.openverse.org/v1/images/?q={keyword}&page_size=1"
+    # Clean the keyword (remove brackets or quotes AI might add)
+    clean_kw = keyword.replace("[", "").replace("]", "").replace('"', "").strip()
+    
+    # We search for the keyword. We removed the strict 'pdm,cc0' filter 
+    # temporarily to make sure the connection is actually working.
+    search_url = f"https://api.openverse.org/v1/images/?q={clean_kw}&page_size=2"
     headers = {"Authorization": f"Bearer {token}"}
     
     try:
         response = requests.get(search_url, headers=headers)
-        print(f"Searching for {keyword}, Status: {response.status_code}")
+        # Log this so you can see it in Render Logs
+        print(f"Openverse Search for '{clean_kw}': Status {response.status_code}")
         
         results = response.json().get('results', [])
         
@@ -90,13 +96,13 @@ def source_images(keyword: str, token: str) -> List[ImageResult]:
         for img in results:
             found_images.append(ImageResult(
                 url=img.get('url'),
-                title=img.get('title', 'Untitled'),
-                creator=img.get('creator', 'Unknown'),
+                title=img.get('title', 'Untitled Archive Piece'),
+                creator=img.get('creator', 'Public Domain'),
                 license_url=img.get('license_url', 'https://creativecommons.org/')
-            ))
+            )
         return found_images
     except Exception as e:
-        print(f"Error in Librarian Gear: {e}")
+        print(f"Librarian Error: {e}")
         return []
 
 # --- API ENDPOINTS ---
