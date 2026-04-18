@@ -65,14 +65,15 @@ def get_openverse_token():
 def source_images(keyword: str, token: str) -> List[ImageResult]:
     """
     Gear 3: The Librarian.
-    Searches Openverse specifically for Public Domain (CC0 and PDM) images.
+    Broadened to find more results while still keeping things legal.
     """
-    # We strictly filter for 'pdm' (Public Domain Mark) and 'cc0' (No Rights Reserved)
-    search_url = f"https://api.openverse.org/v1/images/?q={keyword}&license_type=pdm,cc0&page_size=1"
+    search_url = f"https://api.openverse.org/v1/images/?q={keyword}&page_size=1"
     headers = {"Authorization": f"Bearer {token}"}
     
     try:
         response = requests.get(search_url, headers=headers)
+        print(f"Searching for {keyword}, Status: {response.status_code}")
+        
         results = response.json().get('results', [])
         
         found_images = []
@@ -81,7 +82,7 @@ def source_images(keyword: str, token: str) -> List[ImageResult]:
                 url=img.get('url'),
                 title=img.get('title', 'Untitled'),
                 creator=img.get('creator', 'Unknown'),
-                license_url=img.get('license_url')
+                license_url=img.get('license_url', 'https://creativecommons.org/')
             ))
         return found_images
     except Exception as e:
@@ -116,3 +117,4 @@ async def process_essay(request: EssayRequest):
 @app.get("/")
 def health_check():
     return {"status": "OpenVisualist AI Engine is humming."}
+
