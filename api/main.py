@@ -1,15 +1,14 @@
 import os
-import json
+import urllib.parse
 from typing import List
 from fastapi import FastAPI, HTTPException
-# --- ADD THIS LINE ---
 from fastapi.middleware.cors import CORSMiddleware 
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import openai
 import requests
 
-# 1. SETUP
+# 1. INITIALIZATION & KEYS
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 OPENVERSE_CLIENT_ID = os.getenv("OPENVERSE_CLIENT_ID")
@@ -17,6 +16,7 @@ OPENVERSE_CLIENT_SECRET = os.getenv("OPENVERSE_CLIENT_SECRET")
 
 app = FastAPI(title="OpenVisualist AI Engine")
 
+# 2. SECURITY (CORS) - Allows your website to talk to Render
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -36,101 +36,99 @@ class ImageResult(BaseModel):
     creator: str
     license_url: str
 
-# --- CORE LOGIC (THE GEARS) ---
-
-def extract_keywords(text: str) -> List[str]:
-    """
-    Gear 1: The Analyst.
-    Uses OpenAI to read the essay and extract visual metaphors/keywords.
-    """
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a visual researcher. Extract 3-5 distinct, high-quality visual keywords for an image search based on the provided text. Return ONLY a comma-separated list."},
-                {"role": "user", "content": text}
-            ],
-            max_tokens=50
-        )
-        keywords = response.choices[0].message.content.split(',')
-        return [k.strip() for k in keywords]
-    except Exception as e:
-        print(f"Error in Analyst Gear: {e}")
-        return []
+# --- THE GEARS (LOGIC) ---
 
 def get_openverse_token():
-    """
-    Gear 2: The Credentialer.
-    Authenticates with Openverse to get a temporary access token.
-    """
+    """Requests a fresh access token from Openverse."""
     url = "https://api.openverse.org/v1/auth_tokens/token/"
     data = {
         'client_id': OPENVERSE_CLIENT_ID,
         'client_secret': OPENVERSE_CLIENT_SECRET,
         'grant_type': 'client_credentials'
     }
-    response = requests.post(url, data=data)
-    return response.json().get('access_token')
+    try:
+        response = requests.post(url, data=data)
+        token = response.json().get('access_token')
+        if not token:
+            print(f"CRITICAL: Token request failed. Response: {response.text}")
+        return token
+    except Exception as e:
+        print(f"TOKEN GEAR ERROR: {e}")
+        return None
 
 def source_images(keyword: str, token: str) -> List[ImageResult]:
-    """
-    Improved Librarian: Cleans keywords and broadens search 
-    to ensure we get results even for complex topics.
-    """
-    # Clean the keyword (remove brackets or quotes AI might add)
+    """Searches Openverse for a specific keyword using a valid token."""
+    if not token:
+        return []
+
+    # Clean keyword and make it URL-safe (e.g., "Jazz Music" -> "Jazz%20Music")
     clean_kw = keyword.replace("[", "").replace("]", "").replace('"', "").strip()
+    encoded_kw = urllib.parse.quote(clean_kw)
     
-    # We search for the keyword. We removed the strict 'pdm,cc0' filter 
-    # temporarily to make sure the connection is actually working.
-    search_url = f"https://api.openverse.org/v1/images/?q={clean_kw}&page_size=2"
+    # We use a broad search first to ensure we get results
+    search_url = f"https://api.openverse.org/v1/images/?q={encoded_kw}&page_size=3"
     headers = {"Authorization": f"Bearer {token}"}
     
     try:
         response = requests.get(search_url, headers=headers)
-        # Log this so you can see it in Render Logs
-        print(f"Openverse Search for '{clean_kw}': Status {response.status_code}")
+        # Check logs in Render to see if this is 200, 401, or 403
+        print(f"LIBRARIAN LOG [{clean_kw}]: Status {response.status_code}")
         
-        results = response.json().get('results', [])
+        data = response.json()
+        results = data.get('results', [])
         
         found_images = []
         for img in results:
             found_images.append(ImageResult(
                 url=img.get('url'),
                 title=img.get('title', 'Untitled Archive Piece'),
-                creator=img.get('creator', 'Public Domain'),
+                creator=img.get('creator', 'Public Domain Source'),
                 license_url=img.get('license_url', 'https://creativecommons.org/')
-            )
+            ))
         return found_images
     except Exception as e:
-        print(f"Librarian Error: {e}")
+        print(f"LIBRARIAN GEAR ERROR: {e}")
         return []
 
-# --- API ENDPOINTS ---
+# --- THE MAIN ENDPOINT ---
 
 @app.post("/analyze-and-source", response_model=List[ImageResult])
 async def process_essay(request: EssayRequest):
-    """
-    The Main Switch.
-    Combines all gears to turn an essay into a gallery.
-    """
+    """The master switch that connects the Essay to the Gallery."""
     if not request.content:
-        raise HTTPException(status_code=400, detail="Essay content is empty.")
+        raise HTTPException(status_code=400, detail="Essay content cannot be empty.")
 
-    # Step 1: Analyze keywords
-    keywords = extract_keywords(request.content)
-    
-    # Step 2: Get Auth
+    # STEP 1: Extract Keywords via OpenAI
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a researcher. Extract 3-5 simple, concrete visual nouns from the text as a comma-separated list. No extra text."},
+                {"role": "user", "content": request.content}
+            ],
+            max_tokens=60
+        )
+        raw_keywords = response.choices[0].message.content
+        keywords = [k.strip() for k in raw_keywords.split(',')]
+        print(f"ANALYST GEAR: Extracted {keywords}")
+    except Exception as e:
+        print(f"ANALYST GEAR ERROR: {e}")
+        return []
+
+    # STEP 2: Get Auth Token Once
     token = get_openverse_token()
-    
-    # Step 3: Source images for each keyword
-    all_images = []
+    if not token:
+        return []
+
+    # STEP 3: Source Images
+    all_results = []
     for kw in keywords:
         images = source_images(kw, token)
-        all_images.extend(images)
+        all_results.extend(images)
     
-    return all_images
+    # Return the final JSON list to the frontend
+    return all_results
 
 @app.get("/")
 def health_check():
     return {"status": "OpenVisualist AI Engine is humming."}
-
