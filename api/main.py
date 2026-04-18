@@ -39,18 +39,23 @@ class ImageResult(BaseModel):
 # --- THE GEARS (LOGIC) ---
 
 def get_openverse_token():
-    """Requests a fresh access token from Openverse."""
+    """Requests a fresh access token using the most standard OAuth2 format."""
     url = "https://api.openverse.org/v1/auth_tokens/token/"
-    data = {
-        'client_id': OPENVERSE_CLIENT_ID,
-        'client_secret': OPENVERSE_CLIENT_SECRET,
+    
+    # We use 'data' for a form-encoded request, which Openverse prefers
+    payload = {
+        'client_id': OPENVERSE_CLIENT_ID.strip(), # .strip() removes accidental spaces
+        'client_secret': OPENVERSE_CLIENT_SECRET.strip(),
         'grant_type': 'client_credentials'
     }
+    
     try:
-        response = requests.post(url, data=data)
+        response = requests.post(url, data=payload)
+        if response.status_code != 200:
+            print(f"CRITICAL AUTH FAIL: Status {response.status_code} - {response.text}")
+            return None
+            
         token = response.json().get('access_token')
-        if not token:
-            print(f"CRITICAL: Token request failed. Response: {response.text}")
         return token
     except Exception as e:
         print(f"TOKEN GEAR ERROR: {e}")
