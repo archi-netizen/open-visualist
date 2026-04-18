@@ -33,5 +33,7 @@ open-visualist/
 ├── .env.example          # API Keys (OpenAI, Unsplash, Pexels)
 └── LICENSE               # MIT
 
+---
+
 ## View Mockup
 https://kaushambimate.com/openvisualist-ai/
