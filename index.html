@@ -28,18 +28,19 @@
     --red-bg:#fef2f2; --red-line:#fecaca; --red-ink:#991b1b;
     --serif:'Newsreader',Georgia,'Times New Roman',serif;
     --sans:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --maxw:1320px;
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
   body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.5}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(20px,4vw,48px)}
   a{color:inherit}
   .skip{position:absolute;left:-999px;top:auto}
   .skip:focus{left:20px;top:20px;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;z-index:100}
 
   /* header */
   .ov-header{border-bottom:1px solid var(--line);background:var(--paper)}
-  .ov-header-in{max-width:1120px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .ov-header-in{max-width:var(--maxw);margin:0 auto;padding:16px clamp(20px,4vw,48px);display:flex;align-items:center;justify-content:space-between;gap:16px}
   .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
   .brand svg{flex:none}
   .wordmark{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:-.01em}
@@ -59,17 +60,26 @@
   .steps li:not(:last-child)::after{content:'→';margin-left:20px;color:var(--ink-dim);font-weight:400}
   .steps span{font-family:var(--serif);font-style:italic;color:var(--accent-ink);font-size:13px}
 
-  /* notice */
-  .notice-wrap{padding:8px 0 32px}
-  .notice{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:16px 20px;font-size:14px;line-height:1.6;color:var(--ink-mid)}
-  .notice strong{color:var(--ink);display:block;margin-bottom:4px;font-size:14px}
-  .notice code{font:12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 6px;color:var(--ink)}
-  .notice a{color:var(--accent-ink);font-weight:600;text-decoration:underline}
+  /* 2 ways to see it live */
+  .ways-wrap{padding:8px 0 40px}
+  .ways-title{font-family:var(--serif);font-weight:500;font-size:24px;margin:0 0 4px}
+  .ways-sub{font-size:14px;color:var(--ink-mid);margin:0 0 20px}
+  .ways-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:760px){.ways-grid{grid-template-columns:1fr}}
+  .way-card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:20px 22px}
+  .way-kicker{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 6px}
+  .way-card h3{font-family:var(--serif);font-weight:600;font-size:19px;margin:0 0 8px}
+  .way-desc{font-size:14px;line-height:1.55;color:var(--ink-mid);margin:0 0 14px}
+  .way-steps{margin:0;padding-left:20px;font-size:13.5px;line-height:1.9;color:var(--ink)}
+  .way-steps code{font:12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 6px;color:var(--ink)}
+  .way-steps a{color:var(--accent-ink);font-weight:600;text-decoration:underline}
 
-  /* demo */
-  .demo{padding:8px 0 64px}
-  .demo-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:14px}
+  /* demo — visually distinct from the marketing/how-to content above */
+  .demo{background:var(--accent-bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:40px 0 64px}
+  .demo-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
   .demo-head h2{font-family:var(--serif);font-weight:500;font-size:22px;margin:0}
+  .demo-note{font-size:13px;color:var(--ink-mid);margin:0 0 18px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .demo-note code{font:12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 6px;color:var(--ink)}
   .api-config{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-mid)}
   .api-config input{font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;width:200px;color:var(--ink);background:#fff}
   .demo-grid{display:grid;grid-template-columns:3fr 2fr;gap:24px}
@@ -141,11 +151,31 @@
     </ol>
   </div></section>
 
-  <section class="notice-wrap"><div class="wrap">
-    <div class="notice">
-      <strong>This is a live interface, not a screenshot — but it needs its own engine.</strong>
-      The demo below talks directly to the OpenVisualist API over <code>POST /analyze-and-source</code>; nothing on this page is simulated. To see real results, clone
-      <a href="https://github.com/archi-netizen/open-visualist" target="_blank" rel="noopener">the repository</a>, run the API locally with <code>uvicorn api.main:app --reload --port 8000</code>, and point the API URL field below at it. Without that running, typing below will just show a connection error — that's expected, not broken.
+  <section class="ways-wrap"><div class="wrap">
+    <h2 class="ways-title">2 ways to see it live</h2>
+    <p class="ways-sub">This is a real interface, not a screenshot — but it needs its own engine running somewhere. Pick one:</p>
+    <div class="ways-grid">
+      <div class="way-card">
+        <p class="way-kicker">01</p>
+        <h3>Via Terminal</h3>
+        <p class="way-desc">Run the API on your own machine and point this page at it.</p>
+        <ol class="way-steps">
+          <li>Clone <a href="https://github.com/archi-netizen/open-visualist" target="_blank" rel="noopener">the repository</a>.</li>
+          <li><code>pip install -r requirements.txt</code></li>
+          <li><code>uvicorn api.main:app --reload --port 8000</code></li>
+          <li>Leave the API URL field below on <code>http://localhost:8000</code>.</li>
+        </ol>
+      </div>
+      <div class="way-card">
+        <p class="way-kicker">02</p>
+        <h3>Use Render</h3>
+        <p class="way-desc">Deploy a public copy of the API from your browser — no terminal, no API key required.</p>
+        <ol class="way-steps">
+          <li><a href="https://render.com/deploy?repo=https://github.com/archi-netizen/open-visualist" target="_blank" rel="noopener">Deploy to Render</a>, sign in, click Apply.</li>
+          <li>Copy the service URL Render gives you once it's live.</li>
+          <li>Paste it into the API URL field below.</li>
+        </ol>
+      </div>
     </div>
   </div></section>
 
@@ -157,6 +187,7 @@
         <input id="apiUrl" type="text" value="http://localhost:8000" spellcheck="false">
       </div>
     </div>
+    <p class="demo-note">Talks directly to <code>POST /analyze-and-source</code> — nothing here is simulated. No API pointed at it yet? Typing below will just show a connection error, that's expected, not broken.</p>
     <div class="demo-grid">
       <section aria-label="Writing zone">
         <textarea id="essay" placeholder="Paste or write your essay here. OpenVisualist reads it 3 seconds after you stop typing and suggests public-domain images for what it finds."></textarea>
