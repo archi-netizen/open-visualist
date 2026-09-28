@@ -3,98 +3,192 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>OpenVisualist</title>
-<meta name="description" content="Context-aware image sourcing for the Public Domain — a zero-build front end for the OpenVisualist API.">
+<title>OpenVisualist — Context-aware image sourcing for the Public Domain</title>
+<meta name="description" content="An open-source engine that reads your writing and sources real, public-domain photography to match it — no generative images, just provenance. A project by Kaush.">
+<link rel="canonical" href="https://kaushambimate.com/openvisualist-ai/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="OpenVisualist">
+<meta property="og:title" content="OpenVisualist — Context-aware image sourcing for the Public Domain">
+<meta property="og:description" content="Stop generating. Start discovering. An open-source engine that sources real public-domain photography for your writing.">
+<meta property="og:url" content="https://kaushambimate.com/openvisualist-ai/">
+<meta property="og:image" content="https://kaushambimate.com/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0f8f7a">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1a16'/%3E%3Ccircle cx='16' cy='16' r='8.5' fill='none' stroke='%2300d1b2' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%2300d1b2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#18181b; --mid:#71717a; --dim:#a1a1aa; --line:#e4e4e7; --off:#fafafa;
-    --teal:#0d9488; --teal-bg:#f0fdfa; --teal-ink:#115e59;
-    --green-bg:#d1fae5; --green-ink:#065f46;
+    --paper:#faf8f3; --panel:#f2efe4; --line:#e6dfcd;
+    --ink:#1c1a16; --ink-mid:#6b6557; --ink-dim:#a39c89;
+    --accent:#00d1b2; --accent-ink:#0a6d5d; --accent-bg:#e2faf4;
     --amber-bg:#fef3c7; --amber-ink:#92400e;
+    --green-bg:#d1fae5; --green-ink:#065f46;
     --red-bg:#fef2f2; --red-line:#fecaca; --red-ink:#991b1b;
+    --serif:'Newsreader',Georgia,'Times New Roman',serif;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff}
-  .wrap{max-width:1400px;margin:0 auto;padding:24px}
-  header{margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px}
-  h1{font-size:22px;margin:0}
-  .tagline{color:var(--mid);font-size:14px;margin:2px 0 0}
-  .api-config{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mid)}
-  .api-config input{font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;width:220px;color:var(--ink)}
-  main{display:grid;grid-template-columns:3fr 2fr;gap:24px}
-  @media (max-width:900px){main{grid-template-columns:1fr}}
-  textarea{width:100%;min-height:60vh;resize:vertical;font:16px/1.6 Georgia,"Times New Roman",serif;padding:16px;border:1px solid var(--line);border-radius:10px;outline:none}
-  textarea:focus{border-color:var(--teal)}
-  .status{margin-top:8px;font-size:12px;color:var(--mid)}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  a{color:inherit}
+  .skip{position:absolute;left:-999px;top:auto}
+  .skip:focus{left:20px;top:20px;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;z-index:100}
+
+  /* header */
+  .ov-header{border-bottom:1px solid var(--line);background:var(--paper)}
+  .ov-header-in{max-width:1120px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+  .brand svg{flex:none}
+  .wordmark{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .ov-nav{display:flex;align-items:center;gap:18px;font-size:13px;font-weight:500}
+  .ov-nav a{text-decoration:none;color:var(--ink-mid);border-bottom:1px solid transparent}
+  .ov-nav a:hover{color:var(--accent-ink);border-color:var(--accent-ink)}
+
+  /* hero */
+  .hero{padding:56px 0 20px}
+  .kicker{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 14px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(30px,5vw,48px);line-height:1.12;margin:0 0 14px;letter-spacing:-.01em;max-width:16ch}
+  h1 em{font-style:italic;color:var(--accent-ink)}
+  .hero-sub{font-family:var(--serif);font-style:italic;font-size:19px;color:var(--ink-mid);margin:0 0 18px}
+  .hero-lead{font-size:16px;line-height:1.65;color:var(--ink-mid);max-width:62ch;margin:0 0 28px}
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px 28px}
+  .steps li{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .steps li:not(:last-child)::after{content:'→';margin-left:20px;color:var(--ink-dim);font-weight:400}
+  .steps span{font-family:var(--serif);font-style:italic;color:var(--accent-ink);font-size:13px}
+
+  /* notice */
+  .notice-wrap{padding:8px 0 32px}
+  .notice{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:16px 20px;font-size:14px;line-height:1.6;color:var(--ink-mid)}
+  .notice strong{color:var(--ink);display:block;margin-bottom:4px;font-size:14px}
+  .notice code{font:12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 6px;color:var(--ink)}
+  .notice a{color:var(--accent-ink);font-weight:600;text-decoration:underline}
+
+  /* demo */
+  .demo{padding:8px 0 64px}
+  .demo-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:14px}
+  .demo-head h2{font-family:var(--serif);font-weight:500;font-size:22px;margin:0}
+  .api-config{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-mid)}
+  .api-config input{font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;width:200px;color:var(--ink);background:#fff}
+  .demo-grid{display:grid;grid-template-columns:3fr 2fr;gap:24px}
+  @media (max-width:900px){.demo-grid{grid-template-columns:1fr}}
+  textarea{width:100%;min-height:56vh;resize:vertical;font:16px/1.6 var(--serif);padding:18px;border:1px solid var(--line);border-radius:10px;outline:none;background:#fff;color:var(--ink)}
+  textarea:focus{border-color:var(--accent)}
+  .status{margin-top:8px;font-size:12px;color:var(--ink-mid)}
   .status.error{color:var(--red-ink)}
-  .curation-placeholder{min-height:40vh;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--dim);border:1px dashed var(--line);border-radius:10px;padding:24px;font-size:14px}
+  .curation-placeholder{min-height:40vh;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--ink-dim);border:1px dashed var(--line);border-radius:10px;padding:24px;font-size:14px}
   .error-box{background:var(--red-bg);border:1px solid var(--red-line);color:var(--red-ink);border-radius:10px;padding:14px;font-size:14px}
   .group{margin-bottom:24px}
-  .chip{display:inline-block;background:var(--teal-bg);color:var(--teal-ink);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:8px}
+  .chip{display:inline-block;background:var(--accent-bg);color:var(--accent-ink);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:8px}
   .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media (max-width:500px){.cards{grid-template-columns:1fr}}
   .card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-  .card img{width:100%;height:150px;object-fit:cover;display:block;background:var(--off)}
+  .card img{width:100%;height:150px;object-fit:cover;display:block;background:var(--panel)}
   .card-body{padding:10px}
   .card-title-row{display:flex;justify-content:space-between;align-items:start;gap:8px}
   .card-title{font-size:13px;font-weight:600;line-height:1.3;margin:0}
   .shield{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;text-decoration:none}
   .shield.green{background:var(--green-bg);color:var(--green-ink)}
   .shield.amber{background:var(--amber-bg);color:var(--amber-ink)}
-  .card-meta{font-size:11px;color:var(--mid);margin:4px 0}
-  .meter-row{display:flex;justify-content:space-between;font-size:10px;color:var(--mid);margin:6px 0 2px}
+  .card-meta{font-size:11px;color:var(--ink-mid);margin:4px 0}
+  .meter-row{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-mid);margin:6px 0 2px}
   .meter-track{height:5px;border-radius:999px;background:var(--line)}
-  .meter-fill{height:100%;border-radius:999px;background:var(--teal)}
+  .meter-fill{height:100%;border-radius:999px;background:var(--accent)}
   .copy-btn{margin-top:8px;width:100%;font-size:11px;font-weight:600;padding:6px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
-  .copy-btn:hover{background:var(--off)}
-  footer{margin-top:32px;font-size:12px;color:var(--dim)}
-  footer a{color:var(--mid)}
+  .copy-btn:hover{background:var(--panel)}
+
+  /* footer */
+  .ov-footer{border-top:1px solid var(--line);background:var(--panel);padding:44px 0 28px}
+  .footer-quote{font-family:var(--serif);font-style:italic;font-size:19px;line-height:1.5;color:var(--ink);max-width:52ch;margin:0 0 32px}
+  .footer-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px}
+  @media (max-width:600px){.footer-cols{grid-template-columns:1fr}}
+  .footer-cols h4{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 10px}
+  .footer-cols p{font-size:13px;color:var(--ink-mid);margin:0 0 6px;display:flex;align-items:center;gap:8px}
+  .footer-cols ul{list-style:none;margin:0;padding:0;font-size:13px}
+  .footer-cols li{margin-bottom:6px}
+  .footer-cols a{text-decoration:none;color:var(--ink-mid)}
+  .footer-cols a:hover{color:var(--accent-ink)}
+  .footer-bottom{font-size:12px;color:var(--ink-dim);border-top:1px solid var(--line);padding-top:18px;margin:0}
+  .footer-bottom a{text-decoration:underline;color:var(--ink-mid)}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>OpenVisualist</h1>
-      <p class="tagline">Context-aware image sourcing for the Public Domain.</p>
-    </div>
-    <div class="api-config">
-      <label for="apiUrl">API URL</label>
-      <input id="apiUrl" type="text" value="http://localhost:8000" spellcheck="false">
-    </div>
-  </header>
+<a class="skip" href="#demo">Skip to demo</a>
 
-  <main>
-    <section aria-label="Writing zone">
-      <textarea id="essay" placeholder="Paste or write your essay here. OpenVisualist reads it 3 seconds after you stop typing and suggests public-domain images for what it finds."></textarea>
-      <p id="status" class="status">Start writing — suggestions appear after a pause</p>
-    </section>
+<header class="ov-header"><div class="ov-header-in">
+  <a class="brand" href="#top" aria-label="OpenVisualist — home">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1c1a16"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#00d1b2" stroke-width="2.4"/><circle cx="16" cy="16" r="3" fill="#00d1b2"/></svg>
+    <span class="wordmark">OpenVisualist</span>
+  </a>
+  <nav class="ov-nav" aria-label="Primary">
+    <a href="https://github.com/archi-netizen/open-visualist" target="_blank" rel="noopener">Source on GitHub ↗</a>
+    <a href="https://kaushambimate.com/">Kaush ↗</a>
+  </nav>
+</div></header>
 
-    <section aria-label="Curation zone">
-      <div id="curation">
-        <div class="curation-placeholder">Sourced public-domain images will appear here, grouped by the visual hook they matched.</div>
+<main id="top">
+  <section class="hero"><div class="wrap">
+    <p class="kicker">An open-source experiment · Public-domain sourcing</p>
+    <h1>Context-aware image sourcing<br>for the <em>Public Domain</em>.</h1>
+    <p class="hero-sub">Stop generating. Start discovering.</p>
+    <p class="hero-lead">In an era of AI-hallucinated imagery, OpenVisualist prioritizes the provenance of the real. It reads a draft, understands what it's actually about, and sources genuine public-domain photography to match — for writers, historians and publishers who'd rather cite a source than fabricate one.</p>
+    <ol class="steps">
+      <li><span>01</span>Contextual analysis</li>
+      <li><span>02</span>Visual query expansion</li>
+      <li><span>03</span>Archive sourcing</li>
+    </ol>
+  </div></section>
+
+  <section class="notice-wrap"><div class="wrap">
+    <div class="notice">
+      <strong>This is a live interface, not a screenshot — but it needs its own engine.</strong>
+      The demo below talks directly to the OpenVisualist API over <code>POST /analyze-and-source</code>; nothing on this page is simulated. To see real results, clone
+      <a href="https://github.com/archi-netizen/open-visualist" target="_blank" rel="noopener">the repository</a>, run the API locally with <code>uvicorn api.main:app --reload --port 8000</code>, and point the API URL field below at it. Without that running, typing below will just show a connection error — that's expected, not broken.
+    </div>
+  </div></section>
+
+  <section id="demo" class="demo" aria-label="OpenVisualist demo"><div class="wrap">
+    <div class="demo-head">
+      <h2>Try it</h2>
+      <div class="api-config">
+        <label for="apiUrl">API URL</label>
+        <input id="apiUrl" type="text" value="http://localhost:8000" spellcheck="false">
       </div>
-    </section>
-  </main>
+    </div>
+    <div class="demo-grid">
+      <section aria-label="Writing zone">
+        <textarea id="essay" placeholder="Paste or write your essay here. OpenVisualist reads it 3 seconds after you stop typing and suggests public-domain images for what it finds."></textarea>
+        <p id="status" class="status">Start writing — suggestions appear after a pause</p>
+      </section>
+      <section aria-label="Curation zone">
+        <div id="curation">
+          <div class="curation-placeholder">Sourced public-domain images will appear here, grouped by the visual hook they matched.</div>
+        </div>
+      </section>
+    </div>
+  </div></section>
+</main>
 
-  <footer>
-    This page just talks to whatever <code>API URL</code> you set above —
-    it works with a backend running anywhere, not just this file's own
-    origin. Two ways to get one:
-    <br>
-    <strong>Deployed for you already?</strong> Paste its
-    <code>https://…onrender.com</code> URL (or wherever you hosted it) into
-    the API URL field above.
-    <br>
-    <strong>Running it yourself?</strong> Start
-    <code>uvicorn api.main:app --reload --port 8000</code> and leave the
-    field on <code>http://localhost:8000</code>.
-    <br>
-    See the root README for both the one-click Render deploy and the local
-    setup. A free-tier Render deployment can take 30–60s to answer its
-    first request after being idle — that's it waking up, not an error.
-  </footer>
-</div>
+<footer class="ov-footer"><div class="wrap">
+  <p class="footer-quote">"A tool of discovery, not generation. The design logic prioritizes the authenticity of the source and the flow of the writer."</p>
+  <div class="footer-cols">
+    <div>
+      <h4>License legend</h4>
+      <p><span class="shield green">CC0</span> Public domain — no attribution needed.</p>
+      <p><span class="shield amber">CC-BY</span> Attribution required — license always linked.</p>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><a href="https://github.com/archi-netizen/open-visualist" target="_blank" rel="noopener">Source on GitHub ↗</a></li>
+        <li><a href="https://kaushambimate.com/">Back to kaushambimate.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="footer-bottom">OpenVisualist is an open-source project by <a href="https://kaushambimate.com/">Kaush</a>. MIT-licensed — see the <a href="https://github.com/archi-netizen/open-visualist/blob/main/LICENSE" target="_blank" rel="noopener">repo</a> for details.</p>
+</div></footer>
 
 <script>
 (function () {
