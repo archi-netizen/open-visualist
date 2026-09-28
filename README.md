@@ -23,18 +23,51 @@ https://kaushambimate.com/openvisualist-ai/
 
 ---
 
+## Status
+
+`api/` and `web/` are implemented and work together end-to-end today.
+`wordpress-plugin/` and the multi-archive/verification steps under "How the
+AI Works" above are still the vision, not yet built — see
+`web/README.md` for the precise list of what's real vs. aspirational in the
+current UI.
+
+## Quickstart
+
+```bash
+git clone https://github.com/archi-netizen/open-visualist
+cd open-visualist
+
+# 1. Backend
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # fill in OPENAI_API_KEY at least
+uvicorn api.main:app --reload --port 8000
+
+# 2. Frontend (separate terminal)
+cd web
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Then open http://localhost:3000. See `web/README.md` for what the UI
+does and doesn't do yet.
+
 ## Repository Structure
 
 ```text
 open-visualist/
 ├── api/                  # Python/FastAPI backend (The "Brain")
-│   ├── main.py           # API Entry point
+│   ├── main.py           # API entry point
 │   ├── extraction.py     # LLM logic for keyword harvesting
-│   └── sourcing.py       # Public Domain API integrations
-├── web/                  # React/Next.js Front-end
-│   ├── components/       # Split-pane UI & Thought-Trace display
-│   └── hooks/            # Sideloading & attribution logic
-├── wordpress-plugin/     # The "OpenVisualist Sync" WP integration
-├── .env.example          # API Keys (OpenAI, Unsplash, Pexels)
+│   ├── sourcing.py       # Public Domain API integrations (Openverse)
+│   └── models.py         # Shared Pydantic request/response models
+├── web/                  # Next.js front-end (split-pane UI)
+│   ├── src/app/           # Pages (App Router)
+│   ├── src/components/    # WritingZone, CurationZone, ImageCard, LicenseShield
+│   └── src/lib/           # API client + shared types
+├── wordpress-plugin/     # Planned — the "OpenVisualist Sync" WP integration (not built yet)
+├── design_logic.md       # UX/interaction spec the front-end is built against
+├── .env.example          # Backend API keys (OpenAI, Openverse)
 └── LICENSE               # MIT
 
