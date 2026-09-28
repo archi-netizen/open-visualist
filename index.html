@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenVisualist</title>
+<meta name="description" content="Context-aware image sourcing for the Public Domain — a zero-build front end for the OpenVisualist API.">
+<style>
+  :root{
+    --ink:#18181b; --mid:#71717a; --dim:#a1a1aa; --line:#e4e4e7; --off:#fafafa;
+    --teal:#0d9488; --teal-bg:#f0fdfa; --teal-ink:#115e59;
+    --green-bg:#d1fae5; --green-ink:#065f46;
+    --amber-bg:#fef3c7; --amber-ink:#92400e;
+    --red-bg:#fef2f2; --red-line:#fecaca; --red-ink:#991b1b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff}
+  .wrap{max-width:1400px;margin:0 auto;padding:24px}
+  header{margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px}
+  h1{font-size:22px;margin:0}
+  .tagline{color:var(--mid);font-size:14px;margin:2px 0 0}
+  .api-config{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mid)}
+  .api-config input{font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;width:220px;color:var(--ink)}
+  main{display:grid;grid-template-columns:3fr 2fr;gap:24px}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  textarea{width:100%;min-height:60vh;resize:vertical;font:16px/1.6 Georgia,"Times New Roman",serif;padding:16px;border:1px solid var(--line);border-radius:10px;outline:none}
+  textarea:focus{border-color:var(--teal)}
+  .status{margin-top:8px;font-size:12px;color:var(--mid)}
+  .status.error{color:var(--red-ink)}
+  .curation-placeholder{min-height:40vh;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--dim);border:1px dashed var(--line);border-radius:10px;padding:24px;font-size:14px}
+  .error-box{background:var(--red-bg);border:1px solid var(--red-line);color:var(--red-ink);border-radius:10px;padding:14px;font-size:14px}
+  .group{margin-bottom:24px}
+  .chip{display:inline-block;background:var(--teal-bg);color:var(--teal-ink);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:8px}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:500px){.cards{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card img{width:100%;height:150px;object-fit:cover;display:block;background:var(--off)}
+  .card-body{padding:10px}
+  .card-title-row{display:flex;justify-content:space-between;align-items:start;gap:8px}
+  .card-title{font-size:13px;font-weight:600;line-height:1.3;margin:0}
+  .shield{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;text-decoration:none}
+  .shield.green{background:var(--green-bg);color:var(--green-ink)}
+  .shield.amber{background:var(--amber-bg);color:var(--amber-ink)}
+  .card-meta{font-size:11px;color:var(--mid);margin:4px 0}
+  .meter-row{display:flex;justify-content:space-between;font-size:10px;color:var(--mid);margin:6px 0 2px}
+  .meter-track{height:5px;border-radius:999px;background:var(--line)}
+  .meter-fill{height:100%;border-radius:999px;background:var(--teal)}
+  .copy-btn{margin-top:8px;width:100%;font-size:11px;font-weight:600;padding:6px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
+  .copy-btn:hover{background:var(--off)}
+  footer{margin-top:32px;font-size:12px;color:var(--dim)}
+  footer a{color:var(--mid)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>OpenVisualist</h1>
+      <p class="tagline">Context-aware image sourcing for the Public Domain.</p>
+    </div>
+    <div class="api-config">
+      <label for="apiUrl">API URL</label>
+      <input id="apiUrl" type="text" value="http://localhost:8000" spellcheck="false">
+    </div>
+  </header>
+
+  <main>
+    <section aria-label="Writing zone">
+      <textarea id="essay" placeholder="Paste or write your essay here. OpenVisualist reads it 3 seconds after you stop typing and suggests public-domain images for what it finds."></textarea>
+      <p id="status" class="status">Start writing — suggestions appear after a pause</p>
+    </section>
+
+    <section aria-label="Curation zone">
+      <div id="curation">
+        <div class="curation-placeholder">Sourced public-domain images will appear here, grouped by the visual hook they matched.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Needs the OpenVisualist API running (see the root README) — this page just
+    talks to whatever <code>API URL</code> you set above, so start
+    <code>uvicorn api.main:app --reload --port 8000</code> first.
+    Open this file directly in a browser, or serve it with e.g.
+    <code>python3 -m http.server</code>.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DEBOUNCE_MS = 3000; // matches design_logic.md's "3000ms pause" rule
+
+  var essayEl = document.getElementById("essay");
+  var statusEl = document.getElementById("status");
+  var curationEl = document.getElementById("curation");
+  var apiUrlEl = document.getElementById("apiUrl");
+
+  var STORAGE_KEY = "openvisualist:apiUrl";
+  var savedUrl = null;
+  try { savedUrl = localStorage.getItem(STORAGE_KEY); } catch (e) { /* private mode etc. */ }
+  if (savedUrl) apiUrlEl.value = savedUrl;
+  apiUrlEl.addEventListener("change", function () {
+    try { localStorage.setItem(STORAGE_KEY, apiUrlEl.value.trim()); } catch (e) {}
+  });
+
+  var debounceTimer = null;
+  var activeController = null;
+
+  var STATUS_LABEL = {
+    idle: "Start writing — suggestions appear after a pause",
+    waiting: "Waiting for a pause in typing…",
+    analyzing: "Reading your draft…",
+    done: "Up to date",
+    error: "Couldn't reach the sourcing engine"
+  };
+
+  function setStatus(state, message) {
+    statusEl.textContent = message || STATUS_LABEL[state] || "";
+    statusEl.classList.toggle("error", state === "error");
+  }
+
+  function showPlaceholder(text) {
+    curationEl.innerHTML = "";
+    var div = document.createElement("div");
+    div.className = "curation-placeholder";
+    div.textContent = text;
+    curationEl.appendChild(div);
+  }
+
+  function showError(message) {
+    curationEl.innerHTML = "";
+    var div = document.createElement("div");
+    div.className = "error-box";
+    div.textContent = message;
+    curationEl.appendChild(div);
+  }
+
+  // Green Shield: Public Domain (CC0/PDM) — no attribution required.
+  // Yellow Shield: attribution required (CC-BY and its variants). This
+  // collapses several distinct licenses into two shields per
+  // design_logic.md — some "yellow" licenses (NC/ND variants) also
+  // restrict commercial use or derivatives, which a single shield can't
+  // convey, so the license link is always included alongside it.
+  function renderShield(result) {
+    var a = document.createElement("a");
+    var isGreen = !result.requires_attribution;
+    a.className = "shield " + (isGreen ? "green" : "amber");
+    a.href = result.license_url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.title = isGreen
+      ? "Public domain — no attribution required"
+      : "Attribution required — see license for any other conditions";
+    a.textContent = (result.license_code || "unknown").toUpperCase();
+    return a;
+  }
+
+  function renderCard(result) {
+    var card = document.createElement("div");
+    card.className = "card";
+
+    var link = document.createElement("a");
+    link.href = result.foreign_landing_url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    var img = document.createElement("img");
+    img.src = result.thumbnail;
+    img.alt = result.title;
+    img.loading = "lazy";
+    link.appendChild(img);
+    card.appendChild(link);
+
+    var body = document.createElement("div");
+    body.className = "card-body";
+
+    var titleRow = document.createElement("div");
+    titleRow.className = "card-title-row";
+    var title = document.createElement("p");
+    title.className = "card-title";
+    title.textContent = result.title;
+    titleRow.appendChild(title);
+    titleRow.appendChild(renderShield(result));
+    body.appendChild(titleRow);
+
+    var meta = document.createElement("p");
+    meta.className = "card-meta";
+    meta.textContent = "by " + result.creator + " · " + result.source;
+    body.appendChild(meta);
+
+    var meterRow = document.createElement("div");
+    meterRow.className = "meter-row";
+    var meterLabel = document.createElement("span");
+    meterLabel.textContent = "Match strength";
+    var meterValue = document.createElement("span");
+    meterValue.textContent = result.confidence + "%";
+    meterRow.appendChild(meterLabel);
+    meterRow.appendChild(meterValue);
+    body.appendChild(meterRow);
+
+    var track = document.createElement("div");
+    track.className = "meter-track";
+    var fill = document.createElement("div");
+    fill.className = "meter-fill";
+    fill.style.width = Math.max(0, Math.min(100, result.confidence)) + "%";
+    track.appendChild(fill);
+    body.appendChild(track);
+
+    var copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "copy-btn";
+    copyBtn.textContent = "Copy attribution";
+    copyBtn.addEventListener("click", function () {
+      var done = function () {
+        copyBtn.textContent = "Copied ✓";
+        setTimeout(function () { copyBtn.textContent = "Copy attribution"; }, 2000);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(result.attribution).then(done, done);
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = result.attribution;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta);
+        done();
+      }
+    });
+    body.appendChild(copyBtn);
+
+    card.appendChild(body);
+    return card;
+  }
+
+  // Groups results by the keyword that found them — the honest version of
+  // design_logic.md's "Sticky Vertical Alignment": the API analyzes the
+  // whole essay in one pass rather than per-paragraph, so true
+  // scroll-synced-to-paragraph suggestions aren't possible yet.
+  function renderResults(results) {
+    curationEl.innerHTML = "";
+
+    if (!results.length) {
+      showPlaceholder("No public-domain matches found for this draft yet — try adding more concrete, visual detail.");
+      return;
+    }
+
+    var groups = [];
+    var index = {};
+    results.forEach(function (r) {
+      if (!(r.matched_keyword in index)) {
+        index[r.matched_keyword] = [];
+        groups.push([r.matched_keyword, index[r.matched_keyword]]);
+      }
+      index[r.matched_keyword].push(r);
+    });
+
+    groups.forEach(function (pair) {
+      var keyword = pair[0], images = pair[1];
+      var group = document.createElement("div");
+      group.className = "group";
+
+      var chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = keyword;
+      group.appendChild(chip);
+
+      var cards = document.createElement("div");
+      cards.className = "cards";
+      images.forEach(function (img) { cards.appendChild(renderCard(img)); });
+      group.appendChild(cards);
+
+      curationEl.appendChild(group);
+    });
+  }
+
+  function runAnalysis(text) {
+    if (activeController) activeController.abort();
+    var controller = new AbortController();
+    activeController = controller;
+
+    setStatus("analyzing");
+
+    var apiUrl = (apiUrlEl.value || "http://localhost:8000").trim().replace(/\/+$/, "");
+
+    fetch(apiUrl + "/analyze-and-source", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: text }),
+      signal: controller.signal
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().catch(function () { return {}; }).then(function (body) {
+            throw new Error(body.detail || response.statusText || "Request failed");
+          });
+        }
+        return response.json();
+      })
+      .then(function (results) {
+        setStatus("done");
+        renderResults(results);
+      })
+      .catch(function (err) {
+        if (err && err.name === "AbortError") return;
+        var message = (err && err.message) || "Network error — is the API running at " + apiUrl + "?";
+        setStatus("error", message);
+        showError(message);
+      });
+  }
+
+  essayEl.addEventListener("input", function () {
+    var text = essayEl.value;
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (activeController) activeController.abort();
+
+    if (!text.trim()) {
+      setStatus("idle");
+      showPlaceholder("Sourced public-domain images will appear here, grouped by the visual hook they matched.");
+      return;
+    }
+
+    setStatus("waiting");
+    debounceTimer = setTimeout(function () { runAnalysis(text); }, DEBOUNCE_MS);
+  });
+})();
+</script>
+</body>
+</html>

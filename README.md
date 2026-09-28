@@ -37,21 +37,30 @@ current UI.
 git clone https://github.com/archi-netizen/open-visualist
 cd open-visualist
 
-# 1. Backend
+# Backend (needed either way)
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # fill in OPENAI_API_KEY at least
 uvicorn api.main:app --reload --port 8000
-
-# 2. Frontend (separate terminal)
-cd web
-npm install
-cp .env.example .env.local
-npm run dev
 ```
 
-Then open http://localhost:3000. See `web/README.md` for what the UI
-does and doesn't do yet.
+Then pick a front end:
+
+- **No build step:** open `index.html` directly in a browser (double-click
+  it, or `python3 -m http.server` and visit it) — it talks to the API URL
+  shown at the top of the page, which defaults to `http://localhost:8000`.
+- **The full Next.js app**, with the nicer split-pane UI:
+  ```bash
+  cd web
+  npm install
+  cp .env.example .env.local
+  npm run dev
+  ```
+  Then open http://localhost:3000.
+
+Both front ends hit the same `/analyze-and-source` endpoint and render the
+same thing — `index.html` is the zero-install option, `web/` is the fuller
+build. See `web/README.md` for what the UI does and doesn't do yet.
 
 ## Repository Structure
 
@@ -67,6 +76,7 @@ open-visualist/
 │   ├── src/components/    # WritingZone, CurationZone, ImageCard, LicenseShield
 │   └── src/lib/           # API client + shared types
 ├── wordpress-plugin/     # Planned — the "OpenVisualist Sync" WP integration (not built yet)
+├── index.html            # Zero-build front end — open it directly, no npm needed
 ├── design_logic.md       # UX/interaction spec the front-end is built against
 ├── .env.example          # Backend API keys (OpenAI, Openverse)
 └── LICENSE               # MIT
