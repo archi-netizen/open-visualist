@@ -78,11 +78,21 @@
   </main>
 
   <footer>
-    Needs the OpenVisualist API running (see the root README) — this page just
-    talks to whatever <code>API URL</code> you set above, so start
-    <code>uvicorn api.main:app --reload --port 8000</code> first.
-    Open this file directly in a browser, or serve it with e.g.
-    <code>python3 -m http.server</code>.
+    This page just talks to whatever <code>API URL</code> you set above —
+    it works with a backend running anywhere, not just this file's own
+    origin. Two ways to get one:
+    <br>
+    <strong>Deployed for you already?</strong> Paste its
+    <code>https://…onrender.com</code> URL (or wherever you hosted it) into
+    the API URL field above.
+    <br>
+    <strong>Running it yourself?</strong> Start
+    <code>uvicorn api.main:app --reload --port 8000</code> and leave the
+    field on <code>http://localhost:8000</code>.
+    <br>
+    See the root README for both the one-click Render deploy and the local
+    setup. A free-tier Render deployment can take 30–60s to answer its
+    first request after being idle — that's it waking up, not an error.
   </footer>
 </div>
 

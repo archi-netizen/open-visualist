@@ -31,7 +31,34 @@ AI Works" above are still the vision, not yet built — see
 `web/README.md` for the precise list of what's real vs. aspirational in the
 current UI.
 
-## Quickstart
+## Try it — no terminal needed
+
+The front end is already live: **https://archi-netizen.github.io/open-visualist/**
+(GitHub Pages, serving `index.html`). It needs a running backend to talk
+to. To get one without touching a terminal:
+
+1. Click **[Deploy to Render](https://render.com/deploy?repo=https://github.com/archi-netizen/open-visualist)**.
+2. Sign in / sign up (free), then click **Apply** — no configuration or API
+   keys are required. `render.yaml` handles the rest.
+3. Once it's live, Render shows you the service's URL
+   (`https://openvisualist-api-xxxx.onrender.com`, exact name depends on
+   availability). Copy it.
+4. On the [live page](https://archi-netizen.github.io/open-visualist/),
+   paste that URL into the **API URL** field at the top, then start
+   writing.
+
+That gets you real Openverse results with **zero secrets and zero cost** —
+no `OPENAI_API_KEY` needed, because with none configured the backend uses a
+simple word-frequency heuristic instead of the LLM for keyword extraction
+(see `api/extraction.py`). It's cruder than real semantic understanding,
+but it's enough to drive a search. Add an `OPENAI_API_KEY` later in
+Render's Environment tab any time to switch to real LLM-based extraction —
+no redeploy needed, Render restarts automatically.
+
+Free-tier Render services sleep after inactivity; the first request after
+that can take 30–60 seconds to wake up. That's normal, not a bug.
+
+## Quickstart (running it yourself)
 
 ```bash
 git clone https://github.com/archi-netizen/open-visualist
@@ -40,7 +67,7 @@ cd open-visualist
 # Backend (needed either way)
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in OPENAI_API_KEY at least
+cp .env.example .env   # OPENAI_API_KEY is optional — see "Try it" above
 uvicorn api.main:app --reload --port 8000
 ```
 
@@ -68,8 +95,9 @@ build. See `web/README.md` for what the UI does and doesn't do yet.
 open-visualist/
 ├── api/                  # Python/FastAPI backend (The "Brain")
 │   ├── main.py           # API entry point
-│   ├── extraction.py     # LLM logic for keyword harvesting
+│   ├── extraction.py     # LLM keyword harvesting + the no-key heuristic fallback
 │   ├── sourcing.py       # Public Domain API integrations (Openverse)
+│   ├── ratelimit.py      # Per-IP rate limit for the public endpoint
 │   └── models.py         # Shared Pydantic request/response models
 ├── web/                  # Next.js front-end (split-pane UI)
 │   ├── src/app/           # Pages (App Router)
@@ -77,7 +105,8 @@ open-visualist/
 │   └── src/lib/           # API client + shared types
 ├── wordpress-plugin/     # Planned — the "OpenVisualist Sync" WP integration (not built yet)
 ├── index.html            # Zero-build front end — open it directly, no npm needed
+├── render.yaml           # One-click Render Blueprint for api/ (see "Try it" above)
 ├── design_logic.md       # UX/interaction spec the front-end is built against
-├── .env.example          # Backend API keys (OpenAI, Openverse)
+├── .env.example          # Backend API keys (OpenAI, Openverse — both optional)
 └── LICENSE               # MIT
 

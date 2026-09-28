@@ -1,0 +1,20 @@
+# Render Blueprint — deploys api/ with zero required configuration.
+#
+# In Render's dashboard: New + -> Blueprint -> connect this GitHub repo ->
+# Apply. No environment variables are required to get a working demo (see
+# api/extraction.py's heuristic fallback). If you later add an
+# OPENAI_API_KEY in the service's Environment tab, it'll start using real
+# LLM-based keyword extraction instead — no code change needed, Render
+# restarts the service automatically when you save an env var.
+#
+# Render's Blueprint spec may have evolved since this was written — check
+# https://render.com/docs/blueprint-spec if anything here doesn't match
+# what you see in the dashboard.
+services:
+  - type: web
+    name: openvisualist-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
