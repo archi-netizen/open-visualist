@@ -35,17 +35,24 @@ current UI.
 
 The front end is already live: **https://archi-netizen.github.io/open-visualist/**
 (GitHub Pages, serving `index.html`). It needs a running backend to talk
-to. To get one without touching a terminal:
+to. Confirmed working end-to-end this way:
 
-1. Click **[Deploy to Render](https://render.com/deploy?repo=https://github.com/archi-netizen/open-visualist)**.
-2. Sign in / sign up (free), then click **Apply** — no configuration or API
-   keys are required. `render.yaml` handles the rest.
-3. Once it's live, Render shows you the service's URL
-   (`https://openvisualist-api-xxxx.onrender.com`, exact name depends on
-   availability). Copy it.
-4. On the [live page](https://archi-netizen.github.io/open-visualist/),
-   paste that URL into the **API URL** field at the top, then start
-   writing.
+### No terminal, no problem — use Render
+
+1. Click **[Deploy to Render](https://render.com/deploy?repo=https://github.com/archi-netizen/open-visualist)**
+   (log in with GitHub, Google, etc.).
+2. Sign in (free), click **Apply**. Nothing to configure —
+   `render.yaml` handles it, and no API key is required.
+
+   <img src="docs/img/render-deploy-live.png" alt="Render dashboard showing the openvisualist-api web service deployed and Live, with its https://openvisualist-api.onrender.com URL highlighted" width="600">
+
+3. Once it's live, Render shows you the service URL. Paste it into the
+   **API URL** field on the [live page](https://archi-netizen.github.io/open-visualist/).
+
+   <img src="docs/img/try-it-api-url.png" alt="The OpenVisualist page with the deployed Render URL pasted into the API URL field" width="600">
+
+4. Start typing an essay. Three seconds after you pause, it should return
+   real Openverse images.
 
 That gets you real Openverse results with **zero secrets and zero cost** —
 no `OPENAI_API_KEY` needed, because with none configured the backend uses a
